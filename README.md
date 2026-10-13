@@ -15,15 +15,21 @@
 
 ## 📸 Screenshots
 
-| Admin Analytics Overview | AI Resume Matcher |
+| Login | Student Dashboard |
 |---|---|
-| ![Admin Analytics Overview](https://placehold.co/600x350/0f172a/ffffff?text=Admin+Overview+%2B+Chart.js+Analytics) | ![AI Resume Matcher](https://placehold.co/600x350/0f172a/ffffff?text=Resume+Upload+%26+Skill+Match+Breakdown) |
+| ![Login](docs/screenshots/login.png) | ![Dashboard](docs/screenshots/dashboard.png) |
 
-| Multi-Step Status Tracker | Interactive Swagger API Docs |
+| Jobs with Match Scores | AI Resume Matcher |
 |---|---|
-| ![My Applications Tracker](https://placehold.co/600x350/0f172a/ffffff?text=Visual+Status+Tracker+Stepper) | ![Swagger API Documentation](https://placehold.co/600x350/0f172a/ffffff?text=Interactive+Swagger+OpenAPI+Docs) |
+| ![Jobs](docs/screenshots/jobs.png) | ![AI Resume Matcher](docs/screenshots/resume-match.png) |
 
----
+| Applicants (Admin) | Admin Analytics Overview |
+|---|---|
+| ![Applicants](docs/screenshots/applicants.png) | ![Admin Analytics Overview](docs/screenshots/overview.png) |
+
+**Interactive Swagger API Docs**
+
+![Swagger API Documentation](docs/screenshots/swagger.png)
 
 ## 🌟 Key Features
 
@@ -81,7 +87,7 @@
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/your-username/placetrack.git
+   git clone https://github.com/pernirishendrachowdary07/placetrack.git
    cd placetrack
    ```
 
