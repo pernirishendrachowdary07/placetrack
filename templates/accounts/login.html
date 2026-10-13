@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Login | PlaceTrack{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/login.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="login-page-bg">
+    <div class="login-decor-circle" aria-hidden="true"></div>
+
+    <!-- Header -->
+    <div class="login-header">
+        <div class="login-header-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z"/></svg>
+        </div>
+        <h1>Welcome to PlaceTrack</h1>
+        <p>Choose your login type to continue</p>
+    </div>
+
+    <!-- Django messages -->
+    {% if messages %}
+    <div class="login-messages">
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Two-card grid -->
+    <div class="dual-auth-container">
+
+        <!-- Admin Login Card (left) -->
+        <div class="auth-card admin-card" id="admin-login-card">
+            <div class="card-icon-badge" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/><path d="M19 8h-2v3h-3v2h3v3h2v-3h3v-2h-3z"/></svg>
+            </div>
+            <h2 class="card-title">Admin Login</h2>
+            <p class="card-subtitle">Access the admin dashboard</p>
+
+            {% if admin_error %}
+                <div class="card-error admin-error alert-error" role="alert">{{ admin_error }}</div>
+            {% endif %}
+
+            <form method="POST" action="{% url 'accounts:login' %}">
+                {% csrf_token %}
+                <input type="hidden" name="login_type" value="admin">
+                {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+
+                <label for="admin_username" class="sr-label">Username</label>
+                <div class="input-icon-wrap">
+                    <svg class="input-icon" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                    <input type="text" id="admin_username" name="username" value="{{ admin_username }}" placeholder="Username" required {% if admin_error %}autofocus{% endif %}>
+                </div>
+
+                <label for="admin_password" class="sr-label">Password</label>
+                <div class="input-icon-wrap">
+                    <svg class="input-icon" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1s3.1 1.39 3.1 3.1v2z"/></svg>
+                    <input type="password" id="admin_password" name="password" placeholder="Password" required>
+                    <button type="button" class="toggle-password" aria-label="Show password" data-target="admin_password">
+                        <svg class="eye-open" viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+                        <svg class="eye-closed" viewBox="0 0 24 24" style="display:none"><path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46A11.8 11.8 0 001 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"/></svg>
+                    </button>
+                </div>
+
+                <button type="submit" class="btn-login btn-login-admin">Login</button>
+            </form>
+
+            <div class="auth-footer auth-footer-note">
+                Admin accounts are created by the placement office
+            </div>
+        </div>
+
+        <!-- Student Login Card (right) -->
+        <div class="auth-card student-card" id="student-login-card">
+            <div class="card-icon-badge" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z"/></svg>
+            </div>
+            <h2 class="card-title">Student Login</h2>
+            <p class="card-subtitle">Access your student account</p>
+
+            {% if student_error %}
+                <div class="card-error student-error alert-error" role="alert">{{ student_error }}</div>
+            {% endif %}
+
+            <form method="POST" action="{% url 'accounts:login' %}">
+                {% csrf_token %}
+                <input type="hidden" name="login_type" value="student">
+                {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+
+                <label for="student_username" class="sr-label">Username</label>
+                <div class="input-icon-wrap">
+                    <svg class="input-icon" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                    <input type="text" id="student_username" name="username" value="{{ student_username }}" placeholder="Username" required {% if not admin_error %}autofocus{% endif %}>
+                </div>
+
+                <label for="student_password" class="sr-label">Password</label>
+                <div class="input-icon-wrap">
+                    <svg class="input-icon" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1s3.1 1.39 3.1 3.1v2z"/></svg>
+                    <input type="password" id="student_password" name="password" placeholder="Password" required>
+                    <button type="button" class="toggle-password" aria-label="Show password" data-target="student_password">
+                        <svg class="eye-open" viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+                        <svg class="eye-closed" viewBox="0 0 24 24" style="display:none"><path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46A11.8 11.8 0 001 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"/></svg>
+                    </button>
+                </div>
+
+                <button type="submit" class="btn-login btn-login-student">Login</button>
+            </form>
+
+            <div class="auth-footer">
+                New student? <a href="{% url 'accounts:register' %}">Register here</a>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="login-footer">Better Learning • Brighter Future</div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.querySelectorAll('.toggle-password').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        var targetId = this.getAttribute('data-target');
+        var input = document.getElementById(targetId);
+        var eyeOpen = this.querySelector('.eye-open');
+        var eyeClosed = this.querySelector('.eye-closed');
+        if (input.type === 'password') {
+            input.type = 'text';
+            eyeOpen.style.display = 'none';
+            eyeClosed.style.display = '';
+            this.setAttribute('aria-label', 'Hide password');
+        } else {
+            input.type = 'password';
+            eyeOpen.style.display = '';
+            eyeClosed.style.display = 'none';
+            this.setAttribute('aria-label', 'Show password');
+        }
+    });
+});
+</script>
+{% endblock %}

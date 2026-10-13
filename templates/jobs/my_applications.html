@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+
+{% block title %}My Applications | PlaceTrack{% endblock %}
+
+{% block content %}
+<div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <div>
+        <h1 class="dashboard-title">My Job Applications 📋</h1>
+        <p class="dashboard-sub">Track real-time interview and hiring progression across your campus applications.</p>
+    </div>
+    <div>
+        <a href="{% url 'jobs:list' %}" class="btn-primary" style="width: auto; padding: 0.6rem 1.4rem;">
+            + Explore More Jobs
+        </a>
+    </div>
+</div>
+
+<!-- Application Stats -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-label">Total Applied</div>
+        <div class="stat-value">{{ total_count }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Shortlisted</div>
+        <div class="stat-value" style="color: var(--primary);">{{ shortlisted_count }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">In Interview</div>
+        <div class="stat-value" style="color: #7c3aed;">{{ interview_count }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Selected</div>
+        <div class="stat-value" style="color: var(--success);">{{ selected_count }}</div>
+    </div>
+</div>
+
+<!-- Applications List with Multi-step Status Tracker -->
+{% if applications %}
+    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+        {% for app in applications %}
+            <div class="card" style="padding: 1.75rem;">
+                <!-- Header: Job title, Company, Match Score -->
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
+                    <div>
+                        <h2 style="font-size: 1.3rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.25rem;">
+                            <a href="{% url 'jobs:detail' app.job.id %}" style="text-decoration: none; color: inherit;">
+                                {{ app.job.title }}
+                            </a>
+                        </h2>
+                        <div style="font-size: 0.95rem; color: var(--primary); font-weight: 600;">
+                            🏢 {{ app.job.company }}
+                        </div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.35rem;">
+                            Applied on {{ app.applied_at|date:"F d, Y" }}
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 0.75rem; align-items: center;">
+                        <!-- Match Score Badge -->
+                        <span class="user-badge" style="{% if app.match_score >= 70 %}background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0;{% elif app.match_score >= 40 %}background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe;{% else %}background: #f8fafc; color: #64748b; border: 1px solid #e2e8f0;{% endif %} font-weight: 700; font-size: 0.85rem; padding: 0.35rem 0.75rem;">
+                            🎯 {{ app.match_score }}% Match
+                        </span>
+
+                        <!-- Current Status Badge -->
+                        <span class="user-badge" style="{% if app.status == 'Selected' %}background: #dcfce7; color: #15803d; border: 1px solid #86efac;{% elif app.status == 'Rejected' %}background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5;{% elif app.status == 'Interview' %}background: #f3e8ff; color: #7e22ce; border: 1px solid #d8b4fe;{% elif app.status == 'Shortlisted' %}background: #e0f2fe; color: #0369a1; border: 1px solid #7dd3fc;{% else %}background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;{% endif %} font-weight: 700; font-size: 0.85rem; padding: 0.35rem 0.75rem;">
+                            {{ app.status }}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Visual Status Tracker: Applied -> Shortlisted -> Interview -> Selected -->
+                {% if app.status == 'Rejected' %}
+                    <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 1rem 1.25rem; display: flex; align-items: center; gap: 0.75rem;">
+                        <span style="font-size: 1.25rem;">🚫</span>
+                        <div>
+                            <div style="font-weight: 700; color: #991b1b; font-size: 0.95rem;">Application Status: Not Selected</div>
+                            <div style="font-size: 0.85rem; color: #b91c1c;">Thank you for your interest. Keep exploring other matching openings on PlaceTrack.</div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div style="margin-top: 1rem; padding: 1rem 0 0.5rem 0; border-top: 1px solid var(--border-color);">
+                        <div style="display: flex; justify-content: space-between; position: relative;">
+                            
+                            <!-- Step 1: Applied -->
+                            <div style="flex: 1; text-align: center; position: relative;">
+                                <div style="width: 32px; height: 32px; border-radius: 50%; background: #16a34a; color: white; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; margin-bottom: 0.4rem; box-shadow: 0 0 0 4px #dcfce7;">
+                                    ✓
+                                </div>
+                                <div style="font-weight: 700; font-size: 0.85rem; color: #16a34a;">Applied</div>
+                                <div style="font-size: 0.75rem; color: var(--text-muted);">Submitted</div>
+                            </div>
+
+                            <!-- Step 2: Shortlisted -->
+                            <div style="flex: 1; text-align: center; position: relative;">
+                                <div style="width: 32px; height: 32px; border-radius: 50%; {% if app.status == 'Shortlisted' or app.status == 'Interview' or app.status == 'Selected' %}background: #2563eb; color: white; box-shadow: 0 0 0 4px #dbeafe;{% else %}background: #e2e8f0; color: #64748b;{% endif %} display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; margin-bottom: 0.4rem;">
+                                    {% if app.status == 'Shortlisted' or app.status == 'Interview' or app.status == 'Selected' %}✓{% else %}2{% endif %}
+                                </div>
+                                <div style="font-weight: 600; font-size: 0.85rem; {% if app.status == 'Shortlisted' or app.status == 'Interview' or app.status == 'Selected' %}color: #2563eb;{% else %}color: var(--text-muted);{% endif %}">
+                                    Shortlisted
+                                </div>
+                                <div style="font-size: 0.75rem; color: var(--text-muted);">Profile Review</div>
+                            </div>
+
+                            <!-- Step 3: Interview -->
+                            <div style="flex: 1; text-align: center; position: relative;">
+                                <div style="width: 32px; height: 32px; border-radius: 50%; {% if app.status == 'Interview' or app.status == 'Selected' %}background: #7c3aed; color: white; box-shadow: 0 0 0 4px #ede9fe;{% else %}background: #e2e8f0; color: #64748b;{% endif %} display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; margin-bottom: 0.4rem;">
+                                    {% if app.status == 'Selected' %}✓{% elif app.status == 'Interview' %}3{% else %}3{% endif %}
+                                </div>
+                                <div style="font-weight: 600; font-size: 0.85rem; {% if app.status == 'Interview' or app.status == 'Selected' %}color: #7c3aed;{% else %}color: var(--text-muted);{% endif %}">
+                                    Interview
+                                </div>
+                                <div style="font-size: 0.75rem; color: var(--text-muted);">Technical / HR</div>
+                            </div>
+
+                            <!-- Step 4: Selected -->
+                            <div style="flex: 1; text-align: center; position: relative;">
+                                <div style="width: 32px; height: 32px; border-radius: 50%; {% if app.status == 'Selected' %}background: #16a34a; color: white; box-shadow: 0 0 0 4px #dcfce7;{% else %}background: #e2e8f0; color: #64748b;{% endif %} display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; margin-bottom: 0.4rem;">
+                                    {% if app.status == 'Selected' %}🎉{% else %}4{% endif %}
+                                </div>
+                                <div style="font-weight: 600; font-size: 0.85rem; {% if app.status == 'Selected' %}color: #16a34a; font-weight: 800;{% else %}color: var(--text-muted);{% endif %}">
+                                    Selected
+                                </div>
+                                <div style="font-size: 0.75rem; color: var(--text-muted);">Offer Extended</div>
+                            </div>
+
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="card" style="text-align: center; padding: 3rem 1.5rem;">
+        <h3 style="font-size: 1.25rem; color: var(--text-main); margin-bottom: 0.5rem;">No applications yet</h3>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem; max-width: 500px; margin-left: auto; margin-right: auto;">
+            You have not applied for any jobs yet. Check available jobs, compare your resume match score, and apply with a single click.
+        </p>
+        <a href="{% url 'jobs:list' %}" class="btn-primary" style="width: auto; padding: 0.65rem 1.5rem;">
+            Browse Openings
+        </a>
+    </div>
+{% endif %}
+{% endblock %}

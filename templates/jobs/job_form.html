@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ action_title }} | PlaceTrack{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1.5rem;">
+    <a href="{% url 'jobs:list' %}" style="color: var(--primary); text-decoration: none; font-weight: 500; font-size: 0.95rem;">
+        &larr; Back to all jobs
+    </a>
+</div>
+
+<div class="auth-wrapper" style="max-width: 650px;">
+    <div class="card">
+        <h1 class="card-title">{{ action_title }}</h1>
+        <p class="card-subtitle">Fill in the details below to publish or update the job opportunity.</p>
+
+        <form method="POST">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label for="{{ form.title.id_for_label }}">Job Title *</label>
+                {{ form.title }}
+                {% for error in form.title.errors %}
+                    <div class="form-error">{{ error }}</div>
+                {% endfor %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.company.id_for_label }}">Company Name *</label>
+                {{ form.company }}
+                {% for error in form.company.errors %}
+                    <div class="form-error">{{ error }}</div>
+                {% endfor %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.required_skills.id_for_label }}">Required Skills (Comma-separated) *</label>
+                {{ form.required_skills }}
+                <div class="form-help">{{ form.required_skills.help_text }}</div>
+                {% for error in form.required_skills.errors %}
+                    <div class="form-error">{{ error }}</div>
+                {% endfor %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.description.id_for_label }}">Job Description & Responsibilities *</label>
+                {{ form.description }}
+                {% for error in form.description.errors %}
+                    <div class="form-error">{{ error }}</div>
+                {% endfor %}
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                <button type="submit" class="btn-primary">
+                    {% if job %}Save Changes{% else %}Publish Job Opening{% endif %}
+                </button>
+                <a href="{% url 'jobs:list' %}" style="padding: 0.75rem 1.25rem; border: 1px solid var(--border-color); border-radius: 6px; text-decoration: none; color: var(--text-muted); font-weight: 500; text-align: center;">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

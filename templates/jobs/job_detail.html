@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ job.title }} at {{ job.company }} | PlaceTrack{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1.5rem;">
+    <a href="{% url 'jobs:list' %}" style="color: var(--primary); text-decoration: none; font-weight: 500; font-size: 0.95rem;">
+        &larr; Back to all jobs
+    </a>
+</div>
+
+<div class="card" style="padding: 2.5rem; max-width: 900px; margin: 0 auto;">
+    <!-- Job Header -->
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1.5rem; margin-bottom: 2rem;">
+        <div>
+            <h1 style="font-size: 1.75rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.4rem;">
+                {{ job.title }}
+            </h1>
+            <div style="font-size: 1.1rem; color: var(--primary); font-weight: 600;">
+                🏢 {{ job.company }}
+            </div>
+            <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.5rem;">
+                Posted on {{ job.created_at|date:"F d, Y" }}
+            </div>
+        </div>
+
+        <!-- Role-based actions header -->
+        <div>
+            {% if is_admin %}
+                <div style="display: flex; gap: 0.75rem;">
+                    <a href="{% url 'jobs:edit' job.id %}" class="btn-register" style="background: #334155; padding: 0.5rem 1rem;">
+                        Edit Job
+                    </a>
+                    <a href="{% url 'jobs:delete' job.id %}" class="btn-logout" style="padding: 0.5rem 1rem; border: 1px solid #fecaca; border-radius: 6px; text-decoration: none;">
+                        Delete Job
+                    </a>
+                </div>
+            {% elif user.role == 'student' %}
+                {% if user_application %}
+                    <div style="text-align: right;">
+                        <span class="user-badge student" style="background: #ecfdf5; color: #059669; border-color: #a7f3d0; font-size: 0.9rem; padding: 0.35rem 0.8rem;">
+                            ✓ Status: {{ user_application.status }}
+                        </span>
+                        {% if user_application.match_score > 0 %}
+                            <div style="font-size: 0.85rem; color: var(--primary); margin-top: 0.4rem; font-weight: 600;">
+                                AI Match: {{ user_application.match_score }}%
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Required Skills Section -->
+    <div style="margin-bottom: 2rem;">
+        <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--text-main);">
+            Required Skills
+        </h3>
+        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+            {% for skill in skills %}
+                <span style="background: #eff6ff; color: #1d4ed8; font-weight: 600; font-size: 0.85rem; padding: 0.35rem 0.75rem; border-radius: 6px; border: 1px solid #bfdbfe;">
+                    {{ skill }}
+                </span>
+            {% empty %}
+                <span style="color: var(--text-muted);">No specific skills mentioned</span>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Job Description Section -->
+    <div style="margin-bottom: 2.5rem;">
+        <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--text-main);">
+            Role Overview & Responsibilities
+        </h3>
+        <div style="color: #334155; line-height: 1.7; font-size: 1rem; white-space: pre-line;">
+            {{ job.description }}
+        </div>
+    </div>
+
+    <!-- Application Banner for Students -->
+    {% if user.role == 'student' %}
+        <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem; text-align: center;">
+            {% if user_application %}
+                <p style="color: #059669; font-weight: 700; font-size: 1.05rem; margin-bottom: 0.25rem;">
+                    ✓ You have applied for this position
+                </p>
+                <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem;">
+                    Status: <strong>{{ user_application.status }}</strong> • Recorded Match Score: <strong>{{ user_application.match_score }}%</strong>
+                </p>
+                <a href="{% url 'jobs:my_applications' %}" class="btn-primary" style="width: auto; padding: 0.55rem 1.4rem;">
+                    View in My Applications &rarr;
+                </a>
+            {% else %}
+                <h4 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-main);">
+                    Ready to Apply?
+                </h4>
+                {% if student_match %}
+                    <p style="color: #059669; font-weight: 600; font-size: 0.95rem; margin-bottom: 1rem;">
+                        🎯 Your Current Resume Match: {{ student_match.score }}% 
+                        ({{ student_match.matched_skills|length }}/{{ student_match.total_skills }} skills matched)
+                    </p>
+                {% else %}
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
+                        Submit your application with your active resume. Your calculated match score will be saved with the application.
+                    </p>
+                {% endif %}
+                <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+                    <form method="POST" action="{% url 'jobs:apply' job.id %}" style="margin: 0;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-primary" style="width: auto; padding: 0.65rem 2rem;">
+                            🚀 Apply Now
+                        </button>
+                    </form>
+                    <a href="{% url 'resumes:match' %}?job_id={{ job.id }}" style="padding: 0.65rem 1.25rem; border: 1px solid #cbd5e1; border-radius: 6px; text-decoration: none; color: #334155; font-weight: 600; background: #ffffff;">
+                        Inspect Full Skill Match &rarr;
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

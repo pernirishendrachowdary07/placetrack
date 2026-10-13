@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block title %}Welcome | PlaceTrack{% endblock %}
+
+{% block content %}
+<div style="background: #ffffff; padding: 3rem 2rem; border-radius: 8px; border: 1px solid #e2e8f0; text-align: center; max-width: 800px; margin: 2rem auto;">
+    <h1 style="font-size: 2.25rem; font-weight: 800; margin-bottom: 0.75rem; color: #0f172a;">
+        Welcome to PlaceTrack 🎯
+    </h1>
+    <p style="color: #64748b; font-size: 1.15rem; max-width: 600px; margin: 0 auto 2rem auto; line-height: 1.6;">
+        Track student job applications, manage resumes, and analyze AI skill compatibility for campus placements.
+    </p>
+
+    {% if user.is_authenticated %}
+        <div style="display: flex; gap: 1rem; justify-content: center;">
+            {% if user.role == 'admin' or user.is_superuser %}
+                <a href="{% url 'accounts:admin_overview' %}" class="btn-primary" style="width: auto; padding: 0.75rem 1.75rem;">
+                    Go to Admin Overview &rarr;
+                </a>
+            {% else %}
+                <a href="{% url 'accounts:student_dashboard' %}" class="btn-primary" style="width: auto; padding: 0.75rem 1.75rem;">
+                    Go to Student Dashboard &rarr;
+                </a>
+            {% endif %}
+        </div>
+    {% else %}
+        <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+            <a href="{% url 'accounts:register' %}" class="btn-primary" style="width: auto; padding: 0.75rem 1.75rem;">
+                Student Registration &rarr;
+            </a>
+            <a href="{% url 'accounts:login' %}" style="padding: 0.75rem 1.75rem; border-radius: 6px; font-weight: 600; text-decoration: none; border: 1px solid #cbd5e1; color: #334155; background: #f8fafc;">
+                Sign In
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

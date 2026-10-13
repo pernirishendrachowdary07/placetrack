@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Overview & Analytics | PlaceTrack{% endblock %}
+
+{% block content %}
+<div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+    <div>
+        <h1 class="dashboard-title">Placement Admin Overview 📊</h1>
+        <p class="dashboard-sub">Real-time placement pipeline health, recruitment metrics, and AI skill gap analysis.</p>
+    </div>
+    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+        <a href="{% url 'jobs:admin_applicants' %}" class="btn-register" style="padding: 0.55rem 1.25rem;">
+            View Ranked Applicants &rarr;
+        </a>
+        <a href="{% url 'jobs:create' %}" class="btn-primary" style="width: auto; padding: 0.55rem 1.25rem; background: #0f172a;">
+            + Post Job
+        </a>
+    </div>
+</div>
+
+<!-- Four Key Stat Cards -->
+<div class="stats-grid">
+    <!-- Card 1: Open Jobs -->
+    <div class="stat-card" style="border-left: 4px solid #2563eb;">
+        <div class="stat-label">Open Jobs</div>
+        <div class="stat-value" id="stat-open-jobs" style="color: #2563eb;">
+            {{ open_jobs }}
+        </div>
+        <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.4rem;">
+            Active campus opportunities
+        </div>
+    </div>
+
+    <!-- Card 2: Applications -->
+    <div class="stat-card" style="border-left: 4px solid #0d9488;">
+        <div class="stat-label">Applications</div>
+        <div class="stat-value" id="stat-applications" style="color: #0d9488;">
+            {{ total_applications }}
+        </div>
+        <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.4rem;">
+            Total candidate submissions
+        </div>
+    </div>
+
+    <!-- Card 3: Shortlisted or Beyond -->
+    <div class="stat-card" style="border-left: 4px solid #7c3aed;">
+        <div class="stat-label">Shortlisted or Beyond</div>
+        <div class="stat-value" id="stat-shortlisted-beyond" style="color: #7c3aed;">
+            {{ shortlisted_or_beyond }}
+        </div>
+        <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.4rem;">
+            Shortlisted + Interview + Selected
+        </div>
+    </div>
+
+    <!-- Card 4: Selected -->
+    <div class="stat-card" style="border-left: 4px solid #16a34a;">
+        <div class="stat-label">Selected</div>
+        <div class="stat-value" id="stat-selected" style="color: #16a34a;">
+            {{ selected }}
+        </div>
+        <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.4rem;">
+            Final offers accepted
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js Visualizations Section -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+    
+    <!-- Chart 1: Applications per Company -->
+    <div class="card" style="padding: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+            <div>
+                <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-main);">
+                    🏢 Applications per Company
+                </h3>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.2rem;">
+                    Volume of student interest across hiring partners
+                </p>
+            </div>
+            <span style="font-size: 0.75rem; background: #eff6ff; color: #2563eb; font-weight: 600; padding: 0.25rem 0.5rem; border-radius: 4px;">
+                Live JSON
+            </span>
+        </div>
+
+        <div style="position: relative; height: 320px; width: 100%;">
+            <div class="chart-loading" style="display: flex; height: 100%; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.9rem;">
+                Loading company data...
+            </div>
+            <canvas id="companyApplicationsChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Chart 2: Most Common Missing Skills Across Applicants -->
+    <div class="card" style="padding: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+            <div>
+                <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-main);">
+                    🎯 Most Common Missing Skills
+                </h3>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.2rem;">
+                    Skill gaps identified across candidate resumes vs job requirements
+                </p>
+            </div>
+            <span style="font-size: 0.75rem; background: #fff1f2; color: #e11d48; font-weight: 600; padding: 0.25rem 0.5rem; border-radius: 4px;">
+                Skill Gap
+            </span>
+        </div>
+
+        <div style="position: relative; height: 320px; width: 100%;">
+            <div class="chart-loading" style="display: flex; height: 100%; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.9rem;">
+                Loading skill gap analysis...
+            </div>
+            <canvas id="missingSkillsChart"></canvas>
+        </div>
+    </div>
+
+</div>
+
+<!-- Recent Applications Quick Table -->
+<div class="table-card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h2 style="font-size: 1.2rem; font-weight: 700;">Recent Candidate Applications</h2>
+        <a href="{% url 'jobs:admin_applicants' %}" style="color: var(--primary); font-size: 0.875rem; text-decoration: none; font-weight: 600;">
+            View All in Applicants Table &rarr;
+        </a>
+    </div>
+
+    {% if recent_applications %}
+        <div style="overflow-x: auto;">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Candidate</th>
+                        <th>Job Title</th>
+                        <th>Company</th>
+                        <th>Match Score</th>
+                        <th>Status</th>
+                        <th>Applied At</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for app in recent_applications %}
+                        <tr>
+                            <td style="font-weight: 700;">
+                                {{ app.user.first_name|default:app.user.username }} {{ app.user.last_name }}
+                            </td>
+                            <td>{{ app.job.title }}</td>
+                            <td>{{ app.job.company }}</td>
+                            <td>
+                                <strong style="color: {% if app.match_score >= 70 %}#16a34a{% elif app.match_score >= 40 %}#2563eb{% else %}#ea580c{% endif %};">
+                                    {{ app.match_score }}%
+                                </strong>
+                            </td>
+                            <td>
+                                <span class="user-badge" style="{% if app.status == 'Selected' %}background: #dcfce7; color: #15803d;{% elif app.status == 'Interview' %}background: #f3e8ff; color: #7e22ce;{% elif app.status == 'Shortlisted' %}background: #e0f2fe; color: #0369a1;{% else %}background: #f1f5f9; color: #475569;{% endif %}">
+                                    {{ app.status }}
+                                </span>
+                            </td>
+                            <td style="color: var(--text-muted); font-size: 0.85rem;">
+                                {{ app.applied_at|date:"M d, Y" }}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p style="margin-top: 1rem; color: var(--text-muted); font-size: 0.95rem;">
+            No applications recorded yet.
+        </p>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js UMD library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Admin analytics loader & chart initialization -->
+<script src="/static/js/overview_charts.js"></script>
+{% endblock %}

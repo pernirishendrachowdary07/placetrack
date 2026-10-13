@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block title %}Student Registration | PlaceTrack{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+    <div class="card">
+        <h1 class="card-title">Student Registration</h1>
+        <p class="card-subtitle">Create your student account to apply for jobs and track placements.</p>
+
+        <form method="POST" action="{% url 'accounts:register' %}">
+            {% csrf_token %}
+
+            {% for field in form %}
+                <div class="form-group">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}
+                        <div class="form-help">{{ field.help_text }}</div>
+                    {% endif %}
+                    {% for error in field.errors %}
+                        <div class="form-error">{{ error }}</div>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+
+            <button type="submit" class="btn-primary">Register Account</button>
+        </form>
+
+        <div class="auth-footer">
+            Already have an account? <a href="{% url 'accounts:login' %}">Log in here</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+
+{% block title %}Resume Match | PlaceTrack{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1 class="dashboard-title">AI Resume Matcher 🎯</h1>
+    <p class="dashboard-sub">Upload your resume and analyze skill compatibility against active job openings.</p>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 2rem; align-items: start;">
+    
+    <!-- Left Column: Resume Upload & Current Resume Status -->
+    <div>
+        <div class="card" style="margin-bottom: 1.5rem;">
+            <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-main);">
+                1. Upload Your Resume
+            </h2>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">
+                Supported formats: <strong>.pdf</strong> or <strong>.txt</strong> (Max 5 MB).<br>
+                <em>Note: Text must be readable; scanned image PDFs will be rejected.</em>
+            </p>
+
+            <form method="POST" enctype="multipart/form-data" action="{% url 'resumes:match' %}">
+                {% csrf_token %}
+                <input type="hidden" name="upload_resume" value="1">
+
+                <div class="form-group">
+                    <label for="{{ upload_form.file.id_for_label }}" style="font-weight: 600;">
+                        {{ upload_form.file.label }}
+                    </label>
+                    {{ upload_form.file }}
+                    <div class="form-help">{{ upload_form.file.help_text }}</div>
+                    {% for error in upload_form.file.errors %}
+                        <div class="form-error">{{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                <button type="submit" class="btn-primary" style="margin-top: 0.5rem;">
+                    {% if resume %}Replace Resume File{% else %}Upload & Extract Text{% endif %}
+                </button>
+            </form>
+        </div>
+
+        <!-- Current Resume Overview -->
+        <div class="card">
+            <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.75rem; color: var(--text-main);">
+                Current Resume Profile
+            </h3>
+            {% if resume and resume.extracted_text %}
+                <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 1rem; margin-bottom: 1rem;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; color: #166534; font-weight: 600; font-size: 0.95rem;">
+                        <span>✓</span> Active Resume Active
+                    </div>
+                    <div style="font-size: 0.85rem; color: #15803d; margin-top: 0.25rem;">
+                        File: {{ resume.file.name|slice:"8:" }} | Updated: {{ resume.uploaded_at|date:"M d, Y" }}
+                    </div>
+                </div>
+
+                <div style="font-size: 0.85rem; color: var(--text-muted);">
+                    <strong>Extracted words:</strong> ~{{ resume.extracted_text.split|length }} words detected for AI matching.
+                </div>
+            {% else %}
+                <div style="background: #fffbeb; border: 1px solid #fef3c7; border-radius: 6px; padding: 1rem; color: #92400e; font-size: 0.9rem;">
+                    ⚠️ No resume uploaded yet. Please upload a PDF or TXT resume to check your match scores.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Right Column: Job Selector & Match Results -->
+    <div>
+        <div class="card" style="margin-bottom: 1.5rem;">
+            <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-main);">
+                2. Select Job to Check Compatibility
+            </h2>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.25rem;">
+                Choose an opening from the list to test your resume against its required skills.
+            </p>
+
+            <form method="GET" action="{% url 'resumes:match' %}" style="display: flex; flex-direction: column; gap: 1rem;">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label for="job-select" style="font-weight: 600;">Available Job Openings</label>
+                    <select name="job_id" id="job-select" class="form-control" style="font-size: 0.95rem;">
+                        <option value="">-- Choose a job position --</option>
+                        {% for j in jobs %}
+                            <option value="{{ j.id }}" {% if selected_job and selected_job.id == j.id %}selected{% endif %}>
+                                {{ j.title }} — {{ j.company }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <button type="submit" class="btn-primary" style="background: #0f172a;">
+                    🔍 Check match
+                </button>
+            </form>
+        </div>
+
+        <!-- Match Result Display Section -->
+        {% if selected_job and match_result %}
+            <div class="card" style="border: 2px solid {% if match_result.score >= 70 %}#bbf7d0{% elif match_result.score >= 40 %}#bfdbfe{% else %}#fed7aa{% endif %};">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+                    <div>
+                        <h3 style="font-size: 1.3rem; font-weight: 700; color: var(--text-main);">
+                            {{ selected_job.title }}
+                        </h3>
+                        <div style="color: var(--primary); font-weight: 600; font-size: 0.95rem;">
+                            🏢 {{ selected_job.company }}
+                        </div>
+                    </div>
+
+                    <!-- Large Score Badge -->
+                    <div style="text-align: right;">
+                        <div style="font-size: 2.25rem; font-weight: 800; color: {% if match_result.score >= 70 %}#16a34a{% elif match_result.score >= 40 %}#2563eb{% else %}#ea580c{% endif %};">
+                            {{ match_result.score }}%
+                        </div>
+                        <div style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase;">
+                            Compatibility Score
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Progress Bar -->
+                <div style="margin-bottom: 1.75rem;">
+                    <div style="background-color: #e2e8f0; border-radius: 9999px; height: 14px; width: 100%; overflow: hidden;">
+                        <div style="background-color: {% if match_result.score >= 70 %}#16a34a{% elif match_result.score >= 40 %}#2563eb{% else %}#ea580c{% endif %}; height: 100%; width: {{ match_result.score }}%; border-radius: 9999px; transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 0.35rem; font-size: 0.8rem; color: var(--text-muted);">
+                        <span>0%</span>
+                        <span>Matched {{ match_result.matched_skills|length }} of {{ match_result.total_skills }} required skills</span>
+                        <span>100%</span>
+                    </div>
+                </div>
+
+                <!-- Matched Skills -->
+                <div style="margin-bottom: 1.25rem;">
+                    <div style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: #166534; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.3rem;">
+                        <span>✓</span> Matched Skills ({{ match_result.matched_skills|length }})
+                    </div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
+                        {% for skill in match_result.matched_skills %}
+                            <span style="background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; font-size: 0.825rem; font-weight: 600; padding: 0.25rem 0.65rem; border-radius: 6px;">
+                                ✓ {{ skill }}
+                            </span>
+                        {% empty %}
+                            <span style="color: var(--text-muted); font-size: 0.85rem; font-style: italic;">
+                                None of the required skills were detected in your resume.
+                            </span>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Missing Skills -->
+                <div style="margin-bottom: 1.75rem;">
+                    <div style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: #991b1b; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.3rem;">
+                        <span>✗</span> Missing Skills ({{ match_result.missing_skills|length }})
+                    </div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
+                        {% for skill in match_result.missing_skills %}
+                            <span style="background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; font-size: 0.825rem; font-weight: 500; padding: 0.25rem 0.65rem; border-radius: 6px;">
+                                ✗ {{ skill }}
+                            </span>
+                        {% empty %}
+                            <span style="color: #166534; font-size: 0.85rem; font-weight: 600;">
+                                🎉 Perfect match! You possess all required skills.
+                            </span>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Application Action Button -->
+                <div style="border-top: 1px solid var(--border-color); padding-top: 1.25rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                    <a href="{% url 'jobs:detail' selected_job.id %}" style="color: var(--primary); text-decoration: none; font-size: 0.9rem; font-weight: 600;">
+                        View Full Job Description &rarr;
+                    </a>
+
+                    {% if user_application %}
+                        <span class="user-badge student" style="background: #ecfdf5; color: #059669; border-color: #a7f3d0; padding: 0.45rem 0.9rem; font-size: 0.875rem;">
+                            ✓ Already Applied (Status: {{ user_application.status }})
+                        </span>
+                    {% else %}
+                        <form method="POST" action="{% url 'resumes:apply' selected_job.id %}" style="margin: 0;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-primary" style="width: auto; padding: 0.6rem 1.5rem;">
+                                Apply Now with Current Resume
+                            </button>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+        {% elif selected_job and not match_result %}
+            <div class="card" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                Upload your resume first on the left to see your match analysis for <strong>{{ selected_job.title }}</strong>.
+            </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+
+{% block title %}Applicants Management | PlaceTrack{% endblock %}
+
+{% block content %}
+<div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+    <div>
+        <h1 class="dashboard-title">Placement Applicants 🎓</h1>
+        <p class="dashboard-sub">Review candidates ranked by AI resume match score and update hiring status in real time.</p>
+    </div>
+    <div>
+        <a href="{% url 'jobs:create' %}" class="btn-register" style="padding: 0.6rem 1.25rem;">
+            + Post Another Job
+        </a>
+    </div>
+</div>
+
+<!-- Hidden CSRF token for JavaScript fetch -->
+{% csrf_token %}
+
+<!-- Job Selector Filter Bar -->
+<div class="card" style="padding: 1.25rem; margin-bottom: 2rem;">
+    <form method="GET" action="{% url 'jobs:admin_applicants' %}" style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+        <label for="job-filter" style="font-weight: 700; color: var(--text-main); font-size: 0.95rem; white-space: nowrap;">
+            Filter by Job Posting:
+        </label>
+        <select name="job_id" id="job-filter" class="form-control" style="flex: 1; min-width: 280px; max-width: 500px;" onchange="this.form.submit()">
+            {% for j in jobs %}
+                <option value="{{ j.id }}" {% if selected_job and selected_job.id == j.id %}selected{% endif %}>
+                    {{ j.title }} — {{ j.company }}
+                </option>
+            {% endfor %}
+        </select>
+        <noscript>
+            <button type="submit" class="btn-primary" style="width: auto; padding: 0.55rem 1.2rem;">Select</button>
+        </noscript>
+    </form>
+</div>
+
+<!-- Applicants Ranked List -->
+<div class="table-card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+        <h2 style="font-size: 1.2rem; font-weight: 700;">
+            {% if selected_job %}
+                Candidates for: <span style="color: var(--primary);">{{ selected_job.title }}</span> ({{ total_applicants }})
+            {% else %}
+                All Candidates
+            {% endif %}
+        </h2>
+        <span style="font-size: 0.85rem; color: var(--text-muted);">
+            Ranked by AI Resume Match Score (Highest to Lowest)
+        </span>
+    </div>
+
+    {% if applicants %}
+        <div style="overflow-x: auto;">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th style="width: 60px;">Rank</th>
+                        <th>Applicant</th>
+                        <th>Resume</th>
+                        <th>Match Score</th>
+                        <th>Applied Date</th>
+                        <th style="min-width: 200px;">Hiring Status (Live Update)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for app in applicants %}
+                        <tr id="applicant-row-{{ app.id }}">
+                            <!-- Rank Badge -->
+                            <td>
+                                <span style="display: inline-flex; width: 28px; height: 28px; border-radius: 50%; {% if forloop.counter == 1 %}background: #fef08a; color: #854d0e; font-weight: 800;{% elif forloop.counter == 2 %}background: #e2e8f0; color: #475569; font-weight: 700;{% elif forloop.counter == 3 %}background: #ffedd5; color: #9a3412; font-weight: 700;{% else %}background: #f1f5f9; color: #64748b;{% endif %} align-items: center; justify-content: center; font-size: 0.8rem;">
+                                    #{{ forloop.counter }}
+                                </span>
+                            </td>
+
+                            <!-- Applicant Info -->
+                            <td>
+                                <div style="font-weight: 700; color: var(--text-main);">
+                                    {{ app.user.first_name }} {{ app.user.last_name }}
+                                </div>
+                                <div style="font-size: 0.825rem; color: var(--text-muted);">
+                                    @{{ app.user.username }} • {{ app.user.email }}
+                                </div>
+                            </td>
+
+                            <!-- Resume Link -->
+                            <td>
+                                {% if app.user_resume and app.user_resume.file %}
+                                    <a href="{{ app.user_resume.file.url }}" target="_blank" style="color: var(--primary); text-decoration: none; font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.25rem;">
+                                        📄 View PDF/TXT
+                                    </a>
+                                {% else %}
+                                    <span style="color: var(--text-muted); font-size: 0.8rem;">No file</span>
+                                {% endif %}
+                            </td>
+
+                            <!-- Match Score -->
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 0.6rem;">
+                                    <span style="font-weight: 800; font-size: 1rem; color: {% if app.match_score >= 70 %}#16a34a{% elif app.match_score >= 40 %}#2563eb{% else %}#ea580c{% endif %};">
+                                        {{ app.match_score }}%
+                                    </span>
+                                    <div style="background: #e2e8f0; border-radius: 9999px; height: 6px; width: 60px; overflow: hidden;">
+                                        <div style="background: {% if app.match_score >= 70 %}#16a34a{% elif app.match_score >= 40 %}#2563eb{% else %}#ea580c{% endif %}; height: 100%; width: {{ app.match_score }}%;"></div>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <!-- Applied Date -->
+                            <td style="color: var(--text-muted); font-size: 0.85rem;">
+                                {{ app.applied_at|date:"M d, Y" }}
+                            </td>
+
+                            <!-- Inline Status Dropdown with JS fetch update -->
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 0.6rem;">
+                                    <select 
+                                        class="form-control applicant-status-select" 
+                                        data-app-id="{{ app.id }}"
+                                        style="font-size: 0.85rem; padding: 0.35rem 0.6rem; border-radius: 6px; font-weight: 600; max-width: 140px;"
+                                    >
+                                        {% for status_val, status_label in status_choices %}
+                                            <option value="{{ status_val }}" {% if app.status == status_val %}selected{% endif %}>
+                                                {{ status_label }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                    <span id="status-feedback-{{ app.id }}" style="font-size: 0.8rem; font-weight: 600; white-space: nowrap;"></span>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div style="text-align: center; padding: 2.5rem 1rem; color: var(--text-muted);">
+            No students have applied for this job opening yet.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Vanilla JavaScript fetch handler for inline status updates -->
+<script src="/static/js/applicants.js"></script>
+{% endblock %}
